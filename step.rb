@@ -112,6 +112,7 @@ begin
       entries.each do |filepth|
         disk_file_path = filepth
 
+        all_public_urls = ''
         a_public_page_url = ''
         if disk_file_path.match('.*.ipa')
           a_public_page_url = deploy_ipa_to_bitrise(
@@ -138,6 +139,7 @@ begin
         end
 
         public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
+        all_public_urls = all_public_urls + disk_file_path + " " + public_page_url + "\n"
       end
     end
   else
@@ -170,10 +172,12 @@ begin
                             )
     end
     public_page_url = a_public_page_url
+    all_public_urls = public_page_url
   end
 
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
+  fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URLS' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URLS --value '#{all_public_urls}'")
 
   puts
   puts '## Success'
