@@ -67,6 +67,7 @@ puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
 
 begin
   public_page_url = ''
+  dic = {}
   if File.directory?(options[:deploy_path])
     if options[:is_compress]
       puts
@@ -138,6 +139,25 @@ begin
                                 )
         end
 
+        filename = File.basename(disk_file_path)
+        filename_array = filename.split('-')
+        station = filename
+        if filename_array.count > 2 
+          station = filename_array[1]
+        end
+
+        if dic[station] == nil
+         dic[station] = "\n"
+        end
+        a_public_page_url = a_public_page_url.strip! || a_public_page_url
+        store_type = "PlayStore"
+        if filename.include? "amazon"
+          store_type = "Amazon Store"
+        end
+
+
+        dic[station] = dic[station] + "- " + store_type + ": " + a_public_page_url + "\n"
+
         all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
         puts "(i) Public instal page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
 
@@ -175,7 +195,11 @@ begin
     end
     public_page_url = a_public_page_url
     all_public_urls = public_page_url
+
+
   end
+
+  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}* #{v}" }.join 
 
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
