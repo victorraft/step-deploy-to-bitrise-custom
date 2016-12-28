@@ -109,10 +109,10 @@ begin
       puts '============================='
       puts
 
+      all_public_urls = ''
       entries.each do |filepth|
         disk_file_path = filepth
 
-        all_public_urls = ''
         a_public_page_url = ''
         if disk_file_path.match('.*.ipa')
           a_public_page_url = deploy_ipa_to_bitrise(
@@ -182,6 +182,7 @@ begin
   puts
   puts '## Success'
   puts "(i) You can find the Artifact on Bitrise, on the [Build's page](#{options[:build_url]})"
+  puts "(i) Public instal page urls: \n(#{all_public_urls})"
 rescue => ex
   fail_with_message(ex)
 end
