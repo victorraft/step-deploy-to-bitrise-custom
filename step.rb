@@ -138,8 +138,9 @@ begin
                                 )
         end
 
+        puts "(i) Public instal page url: #{disk_file_path} (#{a_public_page_url})"
         public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
-        all_public_urls = all_public_urls + disk_file_path + " " + public_page_url + "\n"
+        all_public_urls = all_public_urls + disk_file_path + " " + a_public_page_url + "\n"
       end
     end
   else
