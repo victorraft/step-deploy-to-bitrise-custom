@@ -149,7 +149,14 @@ begin
         if dic[station] == nil
          dic[station] = "\n"
         end
-        dic[station] = dic[station] + "- " + filename + ": " + a_public_page_url + "\n"
+        a_public_page_url = a_public_page_url.strip! || a_public_page_url
+        store_type = "PlayStore"
+        if filename.include? "amazon"
+          store_type = "Amazon Store"
+        end
+
+
+        dic[station] = dic[station] + "- " + store_type + ": " + a_public_page_url + "\n"
 
         all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
         puts "(i) Public instal page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
