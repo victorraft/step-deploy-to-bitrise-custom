@@ -184,7 +184,7 @@ begin
   puts
   puts '## Success'
   puts "(i) You can find the Artifact on Bitrise, on the [Build's page](#{options[:build_url]})"
-  puts "(i) Public instal page urls: \n(#{all_public_urls})"
+  puts "(i) Public instal page urls: \n#{all_public_urls}"
 rescue => ex
   fail_with_message(ex)
 end
