@@ -149,7 +149,7 @@ begin
         if dic[station] == nil
          dic[station] = "\n"
         end
-        dic[station] = dic[station] + ">" + filename + ": " + a_public_page_url + "\n"
+        dic[station] = dic[station] + "- " + filename + ": " + a_public_page_url + "\n"
 
         all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
         puts "(i) Public instal page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
