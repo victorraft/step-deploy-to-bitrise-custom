@@ -192,7 +192,7 @@ begin
 
   end
 
-  all_public_urls = dic.sort.map { |k, v| "#{k.upcase} #{v}" } 
+  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}* #{v}" }.join 
 
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
