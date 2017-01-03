@@ -62,10 +62,10 @@ puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
 # --- functions
 # -----------------------
 
-def compress_and_upload()
+def compress_and_upload(path)
   puts
   puts '## Compressing the Deploy directory'
-  tempfile = Tempfile.new(::File.basename(options[:deploy_path]))
+  tempfile = Tempfile.new(::File.basename(path))
   begin
     zip_archive_path = tempfile.path + '.zip'
     puts " (i) zip_archive_path: #{zip_archive_path}"
@@ -160,10 +160,10 @@ begin
     public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
   end
 
-  # if options[:is_compress]
-  compressed_zip_url = compress_and_upload
+  compressed_zip_url = compress_and_upload(options[:deploy_path])
   puts "(i) Public install page url for the compressed file: #{compressed_zip_url})"
   all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
+  # if options[:is_compress]
   # end
 
   all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}*: #{v}" }.join
