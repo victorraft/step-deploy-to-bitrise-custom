@@ -75,7 +75,9 @@ def compress_and_upload(path, build_url, api_token)
 
     fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
 
-    return deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
+    deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
+
+    fail 'Failed to export BITRISE_ZIPPED_APKS_PATH' unless system("envman add --key BITRISE_ZIPPED_APKS_PATH --value '#{zip_archive_path}'")
   rescue => ex
     raise ex
   ensure
@@ -156,9 +158,7 @@ begin
     public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
   end
 
-  compressed_zip_url = compress_and_upload(options[:deploy_path], options[:build_url], options[:api_token])
-  puts "(i) Public install page url for the compressed file: #{compressed_zip_url})"
-  all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
+  compress_and_upload(options[:deploy_path], options[:build_url], options[:api_token])
   # if options[:is_compress]
   # end
 
