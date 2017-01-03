@@ -62,23 +62,20 @@ puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
 # --- functions
 # -----------------------
 
-def compress_and_upload(path)
+def compress_and_upload(path, build_url, api_token)
   puts
   puts '## Compressing the Deploy directory'
   tempfile = Tempfile.new(::File.basename(path))
   begin
     zip_archive_path = tempfile.path + '.zip'
     puts " (i) zip_archive_path: #{zip_archive_path}"
-    zip_gen = ZipFileGenerator.new(options[:deploy_path], zip_archive_path)
+    zip_gen = ZipFileGenerator.new(path, zip_archive_path)
     zip_gen.write
     tempfile.close
 
     fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
 
-    public_page_url = deploy_file_to_bitrise(zip_archive_path,
-                                             options[:build_url],
-                                             options[:api_token]
-    )
+    public_page_url = deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
     return public_page_url
   rescue => ex
     raise ex
@@ -160,7 +157,7 @@ begin
     public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
   end
 
-  compressed_zip_url = compress_and_upload(options[:deploy_path])
+  compressed_zip_url = compress_and_upload(options[:deploy_path], options[:build_url], options[:api_token])
   puts "(i) Public install page url for the compressed file: #{compressed_zip_url})"
   all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
   # if options[:is_compress]
