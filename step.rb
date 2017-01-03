@@ -5,43 +5,13 @@ require_relative 'uploaders/file_uploader'
 require_relative 'uploaders/ipa_uploader'
 require_relative 'uploaders/apk_uploader'
 
-# -----------------------
-# --- functions
-# -----------------------
+# ----------------------------
+# --- Options
 
 def fail_with_message(message)
   puts "\e[31m#{message}\e[0m"
   exit(1)
 end
-
-def compress_and_upload()
-  puts
-  puts '## Compressing the Deploy directory'
-  tempfile = Tempfile.new(::File.basename(options[:deploy_path]))
-  begin
-    zip_archive_path = tempfile.path + '.zip'
-    puts " (i) zip_archive_path: #{zip_archive_path}"
-    zip_gen = ZipFileGenerator.new(options[:deploy_path], zip_archive_path)
-    zip_gen.write
-    tempfile.close
-
-    fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
-
-    public_page_url = deploy_file_to_bitrise(zip_archive_path,
-                                             options[:build_url],
-                                             options[:api_token]
-    )
-    return public_page_url
-  rescue => ex
-    raise ex
-  ensure
-    tempfile.close
-    tempfile.unlink
-  end
-end
-
-# ----------------------------
-# --- Options
 
 options = {
     build_url: nil,
@@ -87,6 +57,36 @@ puts " * deploy_path: #{options[:deploy_path]}"
 puts " * notify_user_groups: #{options[:notify_user_groups]}"
 puts " * notify_email_list: #{options[:notify_email_list]}"
 puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
+
+# -----------------------
+# --- functions
+# -----------------------
+
+def compress_and_upload()
+  puts
+  puts '## Compressing the Deploy directory'
+  tempfile = Tempfile.new(::File.basename(options[:deploy_path]))
+  begin
+    zip_archive_path = tempfile.path + '.zip'
+    puts " (i) zip_archive_path: #{zip_archive_path}"
+    zip_gen = ZipFileGenerator.new(options[:deploy_path], zip_archive_path)
+    zip_gen.write
+    tempfile.close
+
+    fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
+
+    public_page_url = deploy_file_to_bitrise(zip_archive_path,
+                                             options[:build_url],
+                                             options[:api_token]
+    )
+    return public_page_url
+  rescue => ex
+    raise ex
+  ensure
+    tempfile.close
+    tempfile.unlink
+  end
+end
 
 # ----------------------------
 # --- Main
