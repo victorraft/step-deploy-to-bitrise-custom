@@ -152,7 +152,7 @@ begin
       dic[station] = "\n"
     end
     a_public_page_url = a_public_page_url.strip! || a_public_page_url
-    dic[station] = dic[station] + ": " + a_public_page_url + "\n"
+    dic[station] = dic[station] + a_public_page_url + "\n"
 
     all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
     puts "(i) Public install page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
@@ -166,7 +166,7 @@ begin
   all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
   # end
 
-  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}* #{v}" }.join
+  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}*: #{v}" }.join
 
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
