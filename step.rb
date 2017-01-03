@@ -75,8 +75,7 @@ def compress_and_upload(path, build_url, api_token)
 
     fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
 
-    public_page_url = deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
-    return public_page_url
+    return deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
   rescue => ex
     raise ex
   ensure

@@ -27,6 +27,6 @@ def deploy_file_to_bitrise(file_path, build_url, api_token)
                          '',
                          '',
                          '',
-                         false
+                         true
                          )
 end
