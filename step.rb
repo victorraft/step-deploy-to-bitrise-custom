@@ -5,29 +5,25 @@ require_relative 'uploaders/file_uploader'
 require_relative 'uploaders/ipa_uploader'
 require_relative 'uploaders/apk_uploader'
 
-# -----------------------
-# --- functions
-# -----------------------
+# ----------------------------
+# --- Options
 
 def fail_with_message(message)
   puts "\e[31m#{message}\e[0m"
   exit(1)
 end
 
-# ----------------------------
-# --- Options
-
 options = {
-  build_url: nil,
-  api_token: nil,
-  is_compress: false,
-  deploy_path: nil,
-  notify_user_groups: nil,
-  notify_email_list: nil,
-  is_enable_public_page: true
+    build_url: nil,
+    api_token: nil,
+    is_compress: false,
+    deploy_path: nil,
+    notify_user_groups: nil,
+    notify_email_list: nil,
+    is_enable_public_page: true
 }
 
-parser = OptionParser.new do|opts|
+parser = OptionParser.new do |opts|
   opts.banner = 'Usage: step.rb [options]'
   opts.on('-u', '--buildurl URL', 'Build URL') { |u| options[:build_url] = u unless u.to_s == '' }
   opts.on('-t', '--apitoken TOKEN', 'API Token') { |t| options[:api_token] = t unless t.to_s == '' }
@@ -62,144 +58,111 @@ puts " * notify_user_groups: #{options[:notify_user_groups]}"
 puts " * notify_email_list: #{options[:notify_email_list]}"
 puts " * is_enable_public_page: #{options[:is_enable_public_page]}"
 
+# -----------------------
+# --- functions
+# -----------------------
+
+def compress_and_upload(path, build_url, api_token)
+  puts
+  puts '## Compressing the Deploy directory'
+  tempfile = Tempfile.new(::File.basename(path))
+  begin
+    zip_archive_path = tempfile.path + '.zip'
+    puts " (i) zip_archive_path: #{zip_archive_path}"
+    zip_gen = ZipFileGenerator.new(path, zip_archive_path)
+    zip_gen.write
+    tempfile.close
+
+    fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
+
+    deploy_file_to_bitrise(zip_archive_path, build_url, api_token)
+
+    fail 'Failed to export BITRISE_ZIPPED_APKS_PATH' unless system("envman add --key BITRISE_ZIPPED_APKS_PATH --value '#{zip_archive_path}'")
+  rescue => ex
+    raise ex
+  ensure
+    tempfile.close
+    tempfile.unlink
+  end
+end
+
 # ----------------------------
 # --- Main
 
 begin
   public_page_url = ''
   dic = {}
-  if File.directory?(options[:deploy_path])
-    if options[:is_compress]
-      puts
-      puts '## Compressing the Deploy directory'
-      tempfile = Tempfile.new(::File.basename(options[:deploy_path]))
-      begin
-        zip_archive_path = tempfile.path + '.zip'
-        puts " (i) zip_archive_path: #{zip_archive_path}"
-        zip_gen = ZipFileGenerator.new(options[:deploy_path], zip_archive_path)
-        zip_gen.write
-        tempfile.close
 
-        fail 'Failed to create compressed ZIP file' unless File.exist?(zip_archive_path)
+  puts
+  puts '## Uploading the content of the Deploy directory separately'
+  entries = Dir.entries(options[:deploy_path])
+  entries.delete('.')
+  entries.delete('..')
 
-        public_page_url = deploy_file_to_bitrise(zip_archive_path,
-                               options[:build_url],
-                               options[:api_token]
-                              )
-      rescue => ex
-        raise ex
-      ensure
-        tempfile.close
-        tempfile.unlink
-      end
-    else
-      puts
-      puts '## Uploading the content of the Deploy directory separately'
-      entries = Dir.entries(options[:deploy_path])
-      entries.delete('.')
-      entries.delete('..')
+  entries = entries
+                .map { |e| File.join(options[:deploy_path], e) }
+                .select { |e| !File.directory?(e) }
 
-      entries = entries
-        .map { |e| File.join(options[:deploy_path], e) }
-        .select { |e| !File.directory?(e) }
+  puts
+  puts '======= List of files ======='
+  puts ' No files found to deploy' if entries.length == 0
+  entries.each { |filepth| puts " * #{filepth}" }
+  puts '============================='
+  puts
 
-      puts
-      puts '======= List of files ======='
-      puts ' No files found to deploy' if entries.length == 0
-      entries.each { |filepth| puts " * #{filepth}" }
-      puts '============================='
-      puts
+  all_public_urls = ''
+  entries.each do |filepth|
+    disk_file_path = filepth
 
-      all_public_urls = ''
-      entries.each do |filepth|
-        disk_file_path = filepth
-
-        a_public_page_url = ''
-        if disk_file_path.match('.*.ipa')
-          a_public_page_url = deploy_ipa_to_bitrise(
-            disk_file_path,
-            options[:build_url],
-            options[:api_token],
-            options[:notify_user_groups],
-            options[:notify_email_list],
-            options[:is_enable_public_page]
-          )
-        elsif disk_file_path.match('.*.apk')
-          a_public_page_url = deploy_apk_to_bitrise(disk_file_path,
-                                options[:build_url],
-                                options[:api_token],
-                                options[:notify_user_groups],
-                                options[:notify_email_list],
-                                options[:is_enable_public_page]
-                               )
-        else
-          a_public_page_url = deploy_file_to_bitrise(disk_file_path,
-                                 options[:build_url],
-                                 options[:api_token]
-                                )
-        end
-
-        filename = File.basename(disk_file_path)
-        filename_array = filename.split('-')
-        station = filename
-        if filename_array.count > 2 
-          station = filename_array[1]
-        end
-
-        if dic[station] == nil
-         dic[station] = "\n"
-        end
-        a_public_page_url = a_public_page_url.strip! || a_public_page_url
-        store_type = "PlayStore"
-        if filename.include? "amazon"
-          store_type = "Amazon Store"
-        end
-
-
-        dic[station] = dic[station] + "- " + store_type + ": " + a_public_page_url + "\n"
-
-        all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
-        puts "(i) Public instal page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
-
-        public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
-      end
-    end
-  else
-    puts
-    puts '## Deploying single file'
     a_public_page_url = ''
-    if options[:deploy_path].match('.*.ipa')
+    if disk_file_path.match('.*.ipa')
       a_public_page_url = deploy_ipa_to_bitrise(
-        options[:deploy_path],
-        options[:build_url],
-        options[:api_token],
-        options[:notify_user_groups],
-        options[:notify_email_list],
-        options[:is_enable_public_page]
+          disk_file_path,
+          options[:build_url],
+          options[:api_token],
+          options[:notify_user_groups],
+          options[:notify_email_list],
+          options[:is_enable_public_page]
       )
-    elsif options[:deploy_path].match('.*.apk')
-      a_public_page_url = deploy_apk_to_bitrise(
-                            options[:deploy_path],
-                            options[:build_url],
-                            options[:api_token],
-                            options[:notify_user_groups],
-                            options[:notify_email_list],
-                            options[:is_enable_public_page]
-                           )
+    elsif disk_file_path.match('.*.apk')
+      a_public_page_url = deploy_apk_to_bitrise(disk_file_path,
+                                                options[:build_url],
+                                                options[:api_token],
+                                                options[:notify_user_groups],
+                                                options[:notify_email_list],
+                                                options[:is_enable_public_page]
+      )
     else
-      a_public_page_url = deploy_file_to_bitrise(
-                             options[:deploy_path],
-                             options[:build_url],
-                             options[:api_token]
-                            )
+      a_public_page_url = deploy_file_to_bitrise(disk_file_path,
+                                                 options[:build_url],
+                                                 options[:api_token]
+      )
     end
-    public_page_url = a_public_page_url
-    all_public_urls = public_page_url
 
+    filename = File.basename(disk_file_path)
+    filename_array = filename.split('-')
+    station = filename
+    if filename_array.count > 2
+      station = filename_array[1]
+    end
 
+    if dic[station] == nil
+      dic[station] = "\n"
+    end
+    a_public_page_url = a_public_page_url.strip! || a_public_page_url
+    dic[station] = dic[station] + a_public_page_url + "\n"
+
+    all_public_urls = all_public_urls + File.basename(disk_file_path) + " " + a_public_page_url + "\n"
+    puts "(i) Public install page url: #{File.basename(disk_file_path)} (#{a_public_page_url})"
+
+    public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
   end
 
-  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}* #{v}" }.join 
+  compress_and_upload(options[:deploy_path], options[:build_url], options[:api_token])
+  # if options[:is_compress]
+  # end
+
+  all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}*: #{v}" }.join
 
   # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")

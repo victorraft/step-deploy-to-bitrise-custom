@@ -17,6 +17,9 @@ def deploy_file_to_bitrise(file_path, build_url, api_token)
 
   # - Upload the file
   puts '--> Upload the file'
+  puts "--> upload_url: #{upload_url}"
+  puts "--> file_path: #{file_path}"
+
   upload_file(upload_url, file_path)
 
   # - Finish the Artifact creation
