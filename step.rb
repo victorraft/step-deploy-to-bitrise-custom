@@ -160,15 +160,15 @@ begin
     public_page_url = a_public_page_url if public_page_url == '' && !a_public_page_url.nil? && a_public_page_url != ''
   end
 
-  if options[:is_compress]
-    compressed_zip_url = compress_and_upload
-    puts "(i) Public install page url for the compressed file: #{compressed_zip_url})"
-    all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
-  end
+  # if options[:is_compress]
+  compressed_zip_url = compress_and_upload
+  puts "(i) Public install page url for the compressed file: #{compressed_zip_url})"
+  all_public_urls = all_public_urls + "\n*Zip bundle with all the apks:* " + compressed_zip_url
+  # end
 
   all_public_urls = dic.sort.map { |k, v| "*#{k.upcase}* #{v}" }.join
 
-# - Success
+  # - Success
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URL' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URL --value '#{public_page_url}'")
   fail 'Failed to export BITRISE_PUBLIC_INSTALL_PAGE_URLS' unless system("envman add --key BITRISE_PUBLIC_INSTALL_PAGE_URLS --value '#{all_public_urls}'")
 
